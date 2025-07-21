@@ -1,9 +1,27 @@
+local Camera = require "camera"
+local cam
+
+
+
 function love.load()
     player = {
         x = 100,
         y = 100,
         speed = 300,
         size = 32
+    }
+    itemz = {
+        x = 200,
+        y = 200,
+        value = 500,
+        size = 16,
+        collected = false
+    }
+    cam = Camera(player.x, player.y)
+    terrain = {
+        x = 0,
+        y = 0,
+        size = 1000
     }
 end
 
@@ -15,7 +33,8 @@ function love.update(dt)
     if love.keyboard.isDown("a") then dx = dx - 1 end
     if love.keyboard.isDown("d") then dx = dx + 1 end
 
-    -- diag 
+
+    -- diag
     if dx ~= 0 or dy ~= 0 then
         local len = math.sqrt(dx*dx + dy*dy)
         dx = dx / len
@@ -24,11 +43,32 @@ function love.update(dt)
 
     player.x = player.x + dx * player.speed * dt
     player.y = player.y + dy * player.speed * dt
+    cam:lockPosition(player.x + player.size/2, player.y + player.size/2)
+
+    if not itemz.collected and
+        player.x < itemz.x + itemz.size and
+        player.x + player.size > itemz.x and
+        player.y < itemz.y + itemz.size and
+        player.y + player.size > itemz.y then
+
+        player.speed = player.speed + itemz.value
+        itemz.collected = true
+    end
 end
 
-
-
-
 function love.draw()
+    cam:attach()
+
+    -- graphics
+    love.graphics.setColor(0,255,0)
+    love.graphics.rectangle("fill", terrain.x, terrain.y, terrain.size, terrain.size)
+    love.graphics.setColor(255,255,255)
     love.graphics.rectangle("fill", player.x, player.y, player.size, player.size)
+    
+
+    if not itemz.collected then
+        love.graphics.rectangle("line", itemz.x, itemz.y, itemz.size, itemz.size)
+    end
+    cam:detach()
+    -- ui dolu
 end
