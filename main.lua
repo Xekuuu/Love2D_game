@@ -54,8 +54,14 @@ function love.update(dt)
 
     -- grappling hook 
     if love.keyboard.isDown("space") and not hookActive then
+        flag = true 
         hookTargetX = player.x - 170
         hookTargetY = player.y - 150
+        if flag==true then
+            NonUpdateingY=hookTargetY
+            NonUpdateingX=player.x+170
+            flag=false
+        end
         hookActive = true
     end
 
@@ -104,15 +110,27 @@ function love.draw()
     love.graphics.rectangle("line", terrain.x, terrain.y, terrain.size, terrain.size)
 
     
+    --  if hookActive then
+    --      love.graphics.setColor(255, 255, 0)
+    --      love.graphics.line(
+    --         player.x + player.size / 2,
+    --         player.y + player.size / 2,
+    --         player.x - 170,
+    --         player.y - 150
+    --      )
+    --      test=false
+    -- end
+    love.graphics.setColor(255, 255, 0)
     if hookActive then
-        love.graphics.setColor(255, 255, 0)
         love.graphics.line(
-            player.x + player.size / 2,
-            player.y + player.size / 2,
-            player.x + player.size / 2,
-            player.y - 150
-        )
+            player.x + player.size / 2, -- od igraco x 
+            player.y + player.size / 2, -- od igraco y 
+            NonUpdateingY, 
+            NonUpdateingY
+         )
     end
+    
+    
 
     
     love.graphics.setColor(255, 255, 255)
