@@ -125,7 +125,7 @@ function love.draw()
         love.graphics.line(
             player.x + player.size / 2, -- od igraco x 
             player.y + player.size / 2, -- od igraco y 
-            NonUpdateingY, 
+            NonUpdateingX-50, 
             NonUpdateingY
          )
     end
