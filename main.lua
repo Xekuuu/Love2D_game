@@ -33,6 +33,16 @@ function love.load()
         size = 1250
     }
 
+    enemy = {
+        x = love.math.random(0,1250),
+        y = love.math.random(0,1250),
+        dmg = 25,
+        dmgCD = 0,
+        dmgCDT = 0.8, -- enemy attack cd 
+        speed = 500,
+        size = 32
+    }
+
     cam = Camera(player.x, player.y)
 
     
@@ -47,6 +57,10 @@ function love.load()
 end
 
 function love.update(dt)
+
+    if enemy.dmgCD > 0 then
+        enemy.dmgCD = enemy.dmgCD-dt
+    end
     
     if hookCooldown > 0 then
         hookCooldown = hookCooldown - dt
@@ -84,6 +98,8 @@ function love.update(dt)
         hookTargetY = 0
         hookCooldown = 0 
         player.isdead = false  
+        enemy.x = love.math.random(0,1250)
+        enemy.y = love.math.random(0,1250)
     end
 
     
@@ -174,11 +190,25 @@ function love.update(dt)
         itemzD.collected = true
     end
 
+        -- enemy collision
+       if player.x < enemy.x + enemy.size and
+       enemy.dmgCD <= 0 and
+        player.x + enemy.size > enemy.x and
+        player.y < enemy.y + enemy.size and
+        player.y + enemy.size > enemy.y then
+
+        player.hp = player.hp - enemy.dmg
+        enemy.dmgCD=enemy.dmgCDT
+        end
+        
+
     
     if player.hp <= 0 then
         player.isdead = true
         player.speed=0
     end
+
+
 end
 
 
@@ -213,6 +243,9 @@ function love.draw()
     
     love.graphics.setColor(255, 255, 255)
     love.graphics.rectangle("fill", player.x, player.y, player.size, player.size)
+
+    love.graphics.setColor(255,0,0)
+    love.graphics.rectangle("fill", enemy.x, enemy.y, enemy.size, enemy.size)
 
     
     if not itemz.collected then
