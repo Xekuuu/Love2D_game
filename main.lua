@@ -40,7 +40,8 @@ function love.load()
         dmgCD = 0,
         dmgCDT = 0.8, -- enemy attack cd 
         speed = 500,
-        size = 32
+        size = 32,
+        isdead=false
     }
 
     cam = Camera(player.x, player.y)
@@ -190,7 +191,22 @@ function love.update(dt)
         itemzD.collected = true
     end
 
-        -- enemy collision
+    if enemy.isdead==false then
+    
+    local dx1 = player.x - enemy.x
+    local dy1 = player.y - enemy.y
+
+    
+    local distance = math.sqrt(dx1 * dx1 + dy1 * dy1)
+
+    
+    if distance > 0 then
+        enemy.x = enemy.x + (dx1 / distance) * enemy.speed * dt
+        enemy.y = enemy.y + (dy1 / distance) * enemy.speed * dt
+    end
+    end
+
+        
        if player.x < enemy.x + enemy.size and
        enemy.dmgCD <= 0 and
         player.x + enemy.size > enemy.x and
