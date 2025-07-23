@@ -27,7 +27,7 @@ function love.load()
 
     
     hookActive = false
-    hookSpeed = 500
+    hookSpeed = player.speed*2.5
     hookTargetX = 0
     hookTargetY = 0
 end
