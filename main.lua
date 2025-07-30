@@ -4,6 +4,12 @@ local anim8 = require "anim8"
 
 
 function love.load()
+    -- tiled map 
+    sti = require 'sti'
+    gameMap=sti('Maps/map.lua')
+
+
+
     player = {
         x = 100,
         y = 100,
@@ -76,7 +82,9 @@ function love.load()
 end
 
 function love.update(dt)
+    gameMap:update(dt)
     local isMoving = false
+
 
 
     if enemy.dmgCD > 0 then
@@ -219,8 +227,8 @@ function love.update(dt)
     end
 
     
-    player.x = math.max(terrain.x, math.min(player.x, terrain.x + terrain.size - player.size))
-    player.y = math.max(terrain.y, math.min(player.y, terrain.y + terrain.size - player.size))
+    -- player.x = math.max(terrain.x, math.min(player.x, terrain.x + terrain.size - player.size))
+    -- player.y = math.max(terrain.y, math.min(player.y, terrain.y + terrain.size - player.size))
 
     cam:lockPosition(player.x + player.size / 2, player.y + player.size / 2)
 
@@ -285,12 +293,9 @@ end
 function love.draw()
     cam:attach()
 
-    
-    
-    love.graphics.setColor(0, 255, 0)
-    love.graphics.rectangle("fill", terrain.x, terrain.y, terrain.size, terrain.size)
-    love.graphics.setColor(255, 0, 0)
-    love.graphics.rectangle("line", terrain.x, terrain.y, terrain.size, terrain.size)
+
+    love.graphics.setColor(255, 255, 255)  -- 255 255 255 == 1, 1, 1 
+    gameMap:draw(-cam.x + love.graphics.getWidth()/2, -cam.y + love.graphics.getHeight()/2)
 
     if player.isdead == true then
         love.graphics.setColor(255, 0, 0)  
