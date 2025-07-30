@@ -3,21 +3,29 @@ local cam
 local anim8 = require "anim8"
 
 
+
 function love.load()
     -- tiled map 
     sti = require 'sti'
     gameMap=sti('Maps/map.lua')
 
+    -- wf physics 
+    wf = require 'windfield'
+    world = wf.newWorld(0,0)
 
 
     player = {
-        x = 100,
-        y = 100,
+        
+        x = 400,
+        y = 200,
         speed = 300,
         size = 32,
         hp = 100,
         isdead = false 
     }
+    -- player physics
+    player.collider = world:newBSGRectangleCollider(400, 200, 40, 80, 10)
+    player.collider:setFixedRotation(true)
     
 
     -- player animations
@@ -85,6 +93,9 @@ function love.update(dt)
     gameMap:update(dt)
     local isMoving = false
 
+    local vx=0
+    local vy=0
+
 
 
     if enemy.dmgCD > 0 then
@@ -122,12 +133,20 @@ function love.update(dt)
         local len = math.sqrt(dx*dx + dy*dy)
         dx = dx / len
         dy = dy / len
+        player.collider:setLinearVelocity(dx * player.speed, dy * player.speed)
+    else
+        player.collider:setLinearVelocity(0, 0)
+        player.anim:gotoFrame(2)
     end
 
     if isMoving == false then
         player.anim:gotoFrame(2)
     end
 
+    -- libary updates 
+    world:update(dt)
+    player.x =player.collider:getX()
+    player.y=player.collider:getY()
     player.anim:update(dt)
 
     if not hookActive then
@@ -293,37 +312,32 @@ end
 function love.draw()
     cam:attach()
 
-
-    love.graphics.setColor(255, 255, 255)  -- 255 255 255 == 1, 1, 1 
+    love.graphics.setColor(255, 255, 255)
     gameMap:draw(-cam.x + love.graphics.getWidth()/2, -cam.y + love.graphics.getHeight()/2)
 
-    if player.isdead == true then
-        love.graphics.setColor(255, 0, 0)  
-        love.graphics.print("DEAD", player.x, player.y-50)
+    if player.isdead then
+        love.graphics.setColor(255, 0, 0)
+        love.graphics.print("DEAD", player.x, player.y - 50)
     end
 
-    
-    love.graphics.setColor(255, 255, 0)
     if hookActive then
+        love.graphics.setColor(255, 255, 0)
         love.graphics.line(
-            player.x + player.size / 2, -- x1 tocka
-            player.y + player.size / 2, -- y1 tocka
-            NonUpdateingX-100,  -- x2 tocka
-            NonUpdateingY -- y2 tocka
-         )
+            player.x + 24,
+            player.y + 36,
+            NonUpdateingX - 100,
+            NonUpdateingY
+        )
     end
-    
-    
 
-    
     love.graphics.setColor(255, 255, 255)
-    -- love.graphics.rectangle("fill", player.x, player.y, player.size, player.size)
-    player.anim:draw(player.spritesheet, player.x, player.y,nil,4)
+    local px = player.collider:getX()
+    local py = player.collider:getY()
+    player.anim:draw(player.spritesheet, px - 24, py - 36, nil, 4)
 
-    love.graphics.setColor(255,0,0)
+    love.graphics.setColor(255, 0, 0)
     love.graphics.rectangle("fill", enemy.x, enemy.y, enemy.size, enemy.size)
 
-    
     if not itemz.collected then
         love.graphics.setColor(0, 0, 0)
         love.graphics.rectangle("line", itemz.x, itemz.y, itemz.size, itemz.size)
@@ -334,5 +348,6 @@ function love.draw()
         love.graphics.rectangle("line", itemzD.x, itemzD.y, itemzD.size, itemzD.size)
     end
 
+    world:draw()
     cam:detach()
 end
