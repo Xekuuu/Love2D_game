@@ -1,5 +1,7 @@
 local Camera = require "camera"
 local cam
+local anim8 = require "anim8"
+
 
 function love.load()
     player = {
@@ -8,8 +10,22 @@ function love.load()
         speed = 300,
         size = 32,
         hp = 100,
-        isdead = false  
+        isdead = false 
     }
+    
+
+    -- player animations
+    love.graphics.setDefaultFilter("nearest", "nearest")
+    player.spritesheet = love.graphics.newImage('sprites/player-sheet.png')
+    player.grid = anim8.newGrid(12,18,player.spritesheet:getWidth(),player.spritesheet:getHeight())
+
+    player.animations = {}
+    player.animations.down = anim8.newAnimation(player.grid('1-4',1), 0.2)
+    player.animations.left = anim8.newAnimation(player.grid('1-4',2), 0.2)
+    player.animations.right = anim8.newAnimation(player.grid('1-4',3), 0.2)
+    player.animations.up = anim8.newAnimation(player.grid('1-4',4), 0.2) 
+    
+    player.anim=player.animations.left
 
     itemz = {
         x = 200,
@@ -53,11 +69,15 @@ function love.load()
     hookTargetY = 0
     hookCooldown = 0
     hookCooldownTime = 0.8 -- cd  
+
+    counter=0
     
     
 end
 
 function love.update(dt)
+    local isMoving = false
+
 
     if enemy.dmgCD > 0 then
         enemy.dmgCD = enemy.dmgCD-dt
@@ -69,10 +89,26 @@ function love.update(dt)
 
     local dx, dy = 0, 0
 
-    if love.keyboard.isDown("w") then dy = dy - 1 end
-    if love.keyboard.isDown("s") then dy = dy + 1 end
-    if love.keyboard.isDown("a") then dx = dx - 1 end
-    if love.keyboard.isDown("d") then dx = dx + 1 end
+    if love.keyboard.isDown("w") then 
+        dy = dy - 1 
+        player.anim=player.animations.up
+        isMoving=true
+    end
+    if love.keyboard.isDown("s") then 
+        dy = dy + 1 
+        player.anim=player.animations.down
+        isMoving=true
+    end
+    if love.keyboard.isDown("a") then 
+        dx = dx - 1
+        player.anim=player.animations.left
+        isMoving=true
+    end
+    if love.keyboard.isDown("d") then 
+        dx = dx + 1
+        player.anim=player.animations.right
+        isMoving=true 
+    end
 
     if dx ~= 0 or dy ~= 0 then
         local len = math.sqrt(dx*dx + dy*dy)
@@ -80,7 +116,12 @@ function love.update(dt)
         dy = dy / len
     end
 
-    
+    if isMoving == false then
+        player.anim:gotoFrame(2)
+    end
+
+    player.anim:update(dt)
+
     if not hookActive then
         player.x = player.x + dx * player.speed * dt
         player.y = player.y + dy * player.speed * dt
@@ -102,6 +143,19 @@ function love.update(dt)
         enemy.x = love.math.random(0,1250)
         enemy.y = love.math.random(0,1250)
     end
+
+    
+    if love.keyboard.isDown("x") then
+        if counter==0 then
+            enemy.speed=0
+            counter=counter+1
+        end
+    else if counter>0 then
+            enemy.speed=500
+            counter=0
+        end
+    end
+
 
     
     if love.keyboard.isDown("space") and not hookActive and hookCooldown <= 0 then
@@ -258,7 +312,8 @@ function love.draw()
 
     
     love.graphics.setColor(255, 255, 255)
-    love.graphics.rectangle("fill", player.x, player.y, player.size, player.size)
+    -- love.graphics.rectangle("fill", player.x, player.y, player.size, player.size)
+    player.anim:draw(player.spritesheet, player.x, player.y,nil,4)
 
     love.graphics.setColor(255,0,0)
     love.graphics.rectangle("fill", enemy.x, enemy.y, enemy.size, enemy.size)
