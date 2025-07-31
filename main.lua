@@ -24,7 +24,7 @@ function love.load()
         isdead = false 
     }
     -- player physics
-    player.collider = world:newBSGRectangleCollider(400, 200, 40, 80, 10)
+    player.collider = world:newBSGRectangleCollider(400, 200, 40, 70, 0)
     player.collider:setFixedRotation(true)
     
 
@@ -40,6 +40,19 @@ function love.load()
     player.animations.up = anim8.newAnimation(player.grid('1-4',4), 0.2) 
     
     player.anim=player.animations.left
+
+    -- wall phy 
+    walls = {}
+    if gameMap.layers["walls"] then
+        for i, obj in pairs(gameMap.layers["walls"].objects) do
+            local wall = world:newRectangleCollider(obj.x,obj.y,obj.width,obj.height)
+            wall:setType('static')
+            table.insert(walls,wall)
+        end
+    end
+
+    local wall = world:newRectangleCollider(100,200,120,300)
+    wall:setType('static')
 
     itemz = {
         x = 200,
