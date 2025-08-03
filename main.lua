@@ -21,7 +21,8 @@ function love.load()
         speed = 300,
         size = 32,
         hp = 100,
-        isdead = false 
+        isdead = false, 
+        isleft = false
     }
     -- player physics
     player.collider = world:newBSGRectangleCollider(400, 200, 40, 70, 0)
@@ -29,16 +30,24 @@ function love.load()
     
 
     -- player animations
+    -- love.graphics.setDefaultFilter("nearest", "nearest")
+    -- player.spritesheet = love.graphics.newImage('sprites/player-sheet.png')
+    -- player.grid = anim8.newGrid(12,18,player.spritesheet:getWidth(),player.spritesheet:getHeight())
+
+    -- player.animations = {}
+    -- player.animations.down = anim8.newAnimation(player.grid('1-4',1), 0.2)
+    -- player.animations.left = anim8.newAnimation(player.grid('1-4',2), 0.2)
+    -- player.animations.right = anim8.newAnimation(player.grid('1-4',3), 0.2)
+    -- player.animations.up = anim8.newAnimation(player.grid('1-4',4), 0.2) 
+
     love.graphics.setDefaultFilter("nearest", "nearest")
-    player.spritesheet = love.graphics.newImage('sprites/player-sheet.png')
-    player.grid = anim8.newGrid(12,18,player.spritesheet:getWidth(),player.spritesheet:getHeight())
+    player.spritesheet = love.graphics.newImage('sprites/wizardsprite.png')
+    player.grid = anim8.newGrid(16,22,player.spritesheet:getWidth(),player.spritesheet:getHeight(),0,4,0)
 
     player.animations = {}
-    player.animations.down = anim8.newAnimation(player.grid('1-4',1), 0.2)
-    player.animations.left = anim8.newAnimation(player.grid('1-4',2), 0.2)
-    player.animations.right = anim8.newAnimation(player.grid('1-4',3), 0.2)
-    player.animations.up = anim8.newAnimation(player.grid('1-4',4), 0.2) 
-    
+    player.animations.left = anim8.newAnimation(player.grid('1-6',1), 0.1)
+    player.animations.right = anim8.newAnimation(player.grid('1-6',1), 0.1)
+        
     player.anim=player.animations.left
 
     -- wall phy 
@@ -123,23 +132,25 @@ function love.update(dt)
 
     if love.keyboard.isDown("w") then 
         dy = dy - 1 
-        player.anim=player.animations.up
         isMoving=true
+        player.isleft=false
     end
     if love.keyboard.isDown("s") then 
         dy = dy + 1 
-        player.anim=player.animations.down
         isMoving=true
+        player.isleft=false
     end
     if love.keyboard.isDown("a") then 
         dx = dx - 1
         player.anim=player.animations.left
         isMoving=true
+        player.isleft=true
     end
     if love.keyboard.isDown("d") then 
         dx = dx + 1
         player.anim=player.animations.right
-        isMoving=true 
+        isMoving=true
+        player.isleft=false
     end
 
     if dx ~= 0 or dy ~= 0 then
@@ -149,11 +160,11 @@ function love.update(dt)
         player.collider:setLinearVelocity(dx * player.speed, dy * player.speed)
     else
         player.collider:setLinearVelocity(0, 0)
-        player.anim:gotoFrame(2)
+        player.anim:gotoFrame(1)
     end
 
     if isMoving == false then
-        player.anim:gotoFrame(2)
+        player.anim:gotoFrame(1)
     end
 
     -- libary updates 
@@ -346,7 +357,11 @@ function love.draw()
     love.graphics.setColor(255, 255, 255)
     local px = player.collider:getX()
     local py = player.collider:getY()
-    player.anim:draw(player.spritesheet, px - 24, py - 36, nil, 4)
+    if player.isleft==false then
+        player.anim:draw(player.spritesheet, px - 28, py - 38, nil, 3, 3)
+    else
+        player.anim:draw(player.spritesheet, px + 28, py - 38, nil, -3, 3)
+    end
 
     love.graphics.setColor(255, 0, 0)
     love.graphics.rectangle("fill", enemy.x, enemy.y, enemy.size, enemy.size)
