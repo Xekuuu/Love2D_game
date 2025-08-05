@@ -25,21 +25,15 @@ function love.load()
         isleft = false
     }
     -- player physics
-    player.collider = world:newBSGRectangleCollider(400, 200, 40, 70, 0)
+    world:addCollisionClass('Movers',{ignores={'Movers'}})
+    player.collider = world:newBSGRectangleCollider(400, 200, 32, 40, 0)
     player.collider:setFixedRotation(true)
+    player.collider:setCollisionClass('Movers')
+    
     
 
+
     -- player animations
-    -- love.graphics.setDefaultFilter("nearest", "nearest")
-    -- player.spritesheet = love.graphics.newImage('sprites/player-sheet.png')
-    -- player.grid = anim8.newGrid(12,18,player.spritesheet:getWidth(),player.spritesheet:getHeight())
-
-    -- player.animations = {}
-    -- player.animations.down = anim8.newAnimation(player.grid('1-4',1), 0.2)
-    -- player.animations.left = anim8.newAnimation(player.grid('1-4',2), 0.2)
-    -- player.animations.right = anim8.newAnimation(player.grid('1-4',3), 0.2)
-    -- player.animations.up = anim8.newAnimation(player.grid('1-4',4), 0.2) 
-
     love.graphics.setDefaultFilter("nearest", "nearest")
     player.spritesheet = love.graphics.newImage('sprites/wizardsprite.png')
     player.grid = anim8.newGrid(16,22,player.spritesheet:getWidth(),player.spritesheet:getHeight(),0,4,0)
@@ -88,13 +82,20 @@ function love.load()
     enemy = {
         x = love.math.random(0,1250),
         y = love.math.random(0,1250),
-        dmg = 25,
+        dmg = 0,
         dmgCD = 0,
         dmgCDT = 0.8, -- enemy attack cd 
         speed = 500,
         size = 32,
         isdead=false
     }
+
+
+    -- enemy phy
+    enemy.collider=world:newBSGRectangleCollider(enemy.x,enemy.y,32,40,0)
+    enemy.collider:setFixedRotation(true)
+    enemy.collider:setCollisionClass('Movers')
+
 
     cam = Camera(player.x, player.y)
 
@@ -171,6 +172,11 @@ function love.update(dt)
     world:update(dt)
     player.x =player.collider:getX()
     player.y=player.collider:getY()
+
+    -- enemy phy
+    enemy.x=enemy.collider:getX()
+    enemy.y=enemy.collider:getY()
+
     player.anim:update(dt)
 
     if not hookActive then
@@ -296,20 +302,19 @@ function love.update(dt)
         itemzD.collected = true
     end
 
-    if enemy.isdead==false then
-    
-    local dx1 = player.x - enemy.x
-    local dy1 = player.y - enemy.y
-
-    
-    local distance = math.sqrt(dx1 * dx1 + dy1 * dy1)
-
-    
-    if distance > 0 then
-        enemy.x = enemy.x + (dx1 / distance) * enemy.speed * dt
-        enemy.y = enemy.y + (dy1 / distance) * enemy.speed * dt
+    if enemy.isdead == false then
+    local dx = player.x - enemy.x
+    local dy = player.y - enemy.y
+    local dist = math.sqrt(dx * dx + dy * dy)
+    if dist > 0 then
+        dx = dx / dist
+        dy = dy / dist
+        enemy.collider:setLinearVelocity(dx * enemy.speed, dy * enemy.speed)
+    else
+        enemy.collider:setLinearVelocity(0, 0)
     end
-    end
+end
+
 
         
        if player.x < enemy.x + enemy.size and
@@ -358,13 +363,14 @@ function love.draw()
     local px = player.collider:getX()
     local py = player.collider:getY()
     if player.isleft==false then
-        player.anim:draw(player.spritesheet, px - 28, py - 38, nil, 3, 3)
+        player.anim:draw(player.spritesheet, px - 20, py - 38, nil, 3, 3)
     else
-        player.anim:draw(player.spritesheet, px + 28, py - 38, nil, -3, 3)
+        player.anim:draw(player.spritesheet, px + 20, py - 38, nil, -3, 3)
     end
 
     love.graphics.setColor(255, 0, 0)
-    love.graphics.rectangle("fill", enemy.x, enemy.y, enemy.size, enemy.size)
+    local ex, ey = enemy.collider:getPosition()
+    love.graphics.rectangle("fill", ex - enemy.size/2, ey - enemy.size/2, enemy.size, enemy.size)
 
     if not itemz.collected then
         love.graphics.setColor(0, 0, 0)
