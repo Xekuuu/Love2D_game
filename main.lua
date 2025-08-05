@@ -44,6 +44,8 @@ function love.load()
         
     player.anim=player.animations.left
 
+    
+
     -- wall phy 
     walls = {}
     if gameMap.layers["walls"] then
@@ -96,8 +98,31 @@ function love.load()
     enemy.collider:setFixedRotation(true)
     enemy.collider:setCollisionClass('Movers')
 
-
+    -- ======
     cam = Camera(player.x, player.y)
+    -- ======
+
+
+    -- enemy animations 
+
+    --    -- player animations
+    -- love.graphics.setDefaultFilter("nearest", "nearest")
+    -- player.spritesheet = love.graphics.newImage('sprites/wizardsprite.png')
+    -- player.grid = anim8.newGrid(16,22,player.spritesheet:getWidth(),player.spritesheet:getHeight(),0,4,0)
+
+    -- player.animations = {}
+    -- player.animations.left = anim8.newAnimation(player.grid('1-6',1), 0.1)
+    -- player.animations.right = anim8.newAnimation(player.grid('1-6',1), 0.1)
+        
+    -- player.anim=player.animations.left
+
+    enemy.spritesheet = love.graphics.newImage('sprites/enemysprite.png')
+    enemy.grid=anim8.newGrid(15,17,enemy.spritesheet:getWidth(),enemy.spritesheet:getHeight(),0,0,0)
+    enemy.animations = {}
+        enemy.animations.left=anim8.newAnimation(enemy.grid('1-4',1), 0.1)
+
+    enemy.anim=enemy.animations.left
+    
 
     
     hookActive = false
@@ -178,6 +203,7 @@ function love.update(dt)
     enemy.y=enemy.collider:getY()
 
     player.anim:update(dt)
+    enemy.anim:update(dt)
 
     if not hookActive then
         player.x = player.x + dx * player.speed * dt
@@ -275,9 +301,6 @@ function love.update(dt)
         end
     end
 
-    
-    -- player.x = math.max(terrain.x, math.min(player.x, terrain.x + terrain.size - player.size))
-    -- player.y = math.max(terrain.y, math.min(player.y, terrain.y + terrain.size - player.size))
 
     cam:lockPosition(player.x + player.size / 2, player.y + player.size / 2)
 
@@ -310,6 +333,7 @@ function love.update(dt)
         dx = dx / dist
         dy = dy / dist
         enemy.collider:setLinearVelocity(dx * enemy.speed, dy * enemy.speed)
+        enemy.anim=enemy.animations.left
     else
         enemy.collider:setLinearVelocity(0, 0)
     end
@@ -370,7 +394,10 @@ function love.draw()
 
     love.graphics.setColor(255, 0, 0)
     local ex, ey = enemy.collider:getPosition()
-    love.graphics.rectangle("fill", ex - enemy.size/2, ey - enemy.size/2, enemy.size, enemy.size)
+    if enemy.isdead ==false then
+    -- love.graphics.rectangle("fill", ex - enemy.size/2, ey - enemy.size/2, enemy.size, enemy.size)
+    enemy.anim:draw(enemy.spritesheet, ex-20,ey-38,nil,3,3)
+    end
 
     if not itemz.collected then
         love.graphics.setColor(0, 0, 0)
