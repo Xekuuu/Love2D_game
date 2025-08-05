@@ -84,7 +84,7 @@ function love.load()
     enemy = {
         x = love.math.random(0,1250),
         y = love.math.random(0,1250),
-        dmg = 0,
+        dmg = 25,
         dmgCD = 0,
         dmgCDT = 0.8, -- enemy attack cd 
         speed = 500,
@@ -134,6 +134,7 @@ function love.load()
 
     counter=0
     
+    isEnemyFrozen = false
     
 end
 
@@ -228,19 +229,6 @@ function love.update(dt)
     end
 
     
-    if love.keyboard.isDown("x") then
-        if counter==0 then
-            enemy.speed=0
-            counter=counter+1
-        end
-    else if counter>0 then
-            enemy.speed=500
-            counter=0
-        end
-    end
-
-
-    
     if love.keyboard.isDown("space") and not hookActive and hookCooldown <= 0 then
         flag = true 
         
@@ -325,7 +313,7 @@ function love.update(dt)
         itemzD.collected = true
     end
 
-    if enemy.isdead == false then
+    if enemy.isdead == false and not isEnemyFrozen then
     local dx = player.x - enemy.x
     local dy = player.y - enemy.y
     local dist = math.sqrt(dx * dx + dy * dy)
@@ -337,6 +325,8 @@ function love.update(dt)
     else
         enemy.collider:setLinearVelocity(0, 0)
     end
+elseif isEnemyFrozen then
+    enemy.collider:setLinearVelocity(0, 0)
 end
 
 
@@ -359,6 +349,12 @@ end
     end
 
 
+end
+
+function love.keypressed(key)
+    if key == "x" then
+        isEnemyFrozen = not isEnemyFrozen
+    end
 end
 
 
