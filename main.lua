@@ -297,18 +297,17 @@ end
 function love.draw()
     cam:attach()
 
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1, 1)
     gameMap:draw(-cam.x + love.graphics.getWidth()/2, -cam.y + love.graphics.getHeight()/2)
 
     if player.isdead then
-        love.graphics.setColor(255, 0, 0)
+        love.graphics.setColor(1, 0, 0, 1)  
         love.graphics.print("DEAD", player.x, player.y - 50)
     end
 
     GrapplingHook.draw(hook, player)
 
-    love.graphics.setColor(255, 255, 255)
-    -- player draw
+    love.graphics.setColor(1, 1, 1, 1)
     local px = player.collider:getX()
     local py = player.collider:getY()
     if player.isleft==false then
@@ -319,7 +318,7 @@ function love.draw()
         love.graphics.circle("line",px,py,player.range)
     end
 
-    love.graphics.setColor(255, 0, 0)
+    love.graphics.setColor(1, 1, 1, 1)
     local ex, ey = enemy.collider:getPosition()
     if enemy.isdead ==false then
     if enemy.x<player.x then
@@ -330,19 +329,19 @@ function love.draw()
     end
 
     if not itemz.collected then
-        love.graphics.setColor(0, 0, 0)
+        love.graphics.setColor(0, 0, 0, 1)  
         love.graphics.rectangle("line", itemz.x, itemz.y, itemz.size, itemz.size)
     end
 
     if not itemzD.collected then
-        love.graphics.setColor(255, 0, 0)
+        love.graphics.setColor(1, 0, 0, 1) 
         love.graphics.rectangle("line", itemzD.x, itemzD.y, itemzD.size, itemzD.size)
     end
 
-    world:draw()
+    -- world:draw()
     cam:detach()
     -- cords 
-    love.graphics.setColor(255, 0, 0)
+    love.graphics.setColor(1, 0, 0, 1)  
     love.graphics.print("X: "..math.floor(player.x).." Y: "..math.floor(player.y), love.graphics.getWidth() - 150, 10)
 
 end
