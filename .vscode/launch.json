@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run LOVE2D (via BAT)",
+      "type": "pwa-node",
+      "request": "launch",
+      "runtimeExecutable": "cmd.exe",
+      "runtimeArgs": ["/c", "run.bat"],
+      "cwd": "E:\\Love\\project",
+      "console": "externalTerminal"
+    }
+  ]
+}

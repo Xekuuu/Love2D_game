@@ -195,22 +195,6 @@ function love.update(dt)
         player.y = player.y + dy * player.speed * dt
     end
 
-    
-    if love.keyboard.isDown("r") then
-        player.x = player.collider:getX()
-        player.y = player.collider:getY()
-        player.speed = 300
-        player.hp = 100  
-        itemz.collected = false
-        itemzD.collected = false  
-        GrapplingHook.reset(hook)
-        player.isdead = false  
-        enemy.x = love.math.random(0,1250)
-        enemy.y = love.math.random(0,1250)
-        enemy.collider:setLinearVelocity(dx * enemy.speed, dy * enemy.speed)
-        enemy.isdead=false
-    end
-
     GrapplingHook.update(hook, player, dt, cam)
 
     cam:lockPosition(player.x + player.size / 2, player.y + player.size / 2)
@@ -271,16 +255,41 @@ end
         player.speed=0
     end
 
-    -- weapon top right trest
-    if enemy.x <= player.x+player.range and enemy.y<=player.y+player.range then
-        enemy.hp = enemy.hp-weapon.damage
+
+    if weapon.damageCD <= 0 then
+    local dx = enemy.x - player.x
+    local dy = enemy.y - player.y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
+    if distance <= player.range and not enemy.isdead then
+        enemy.hp = enemy.hp - weapon.damage
+        weapon.damageCD = 0.35 
     end
+end
+
 
 end
+
 
 function love.keypressed(key)
     if key == "x" then
         isEnemyFrozen = not isEnemyFrozen
+    end
+    if key == "r" then
+        player.x = player.collider:getX()
+        player.y = player.collider:getY()
+        player.speed = 300
+        player.hp = 100  
+        itemz.collected = false
+        itemzD.collected = false  
+        GrapplingHook.reset(hook)
+        player.isdead = false  
+        enemy.x = love.math.random(0,1250)
+        enemy.y = love.math.random(0,1250)
+        enemy.collider:setPosition(enemy.x, enemy.y)
+        enemy.collider:setLinearVelocity(0, 0)
+        enemy.isdead=false
+        enemy.hp = 50
     end
 end
 
