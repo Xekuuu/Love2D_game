@@ -1,8 +1,7 @@
 local Camera = require "camera"
 local cam
 local anim8 = require "anim8"
-
-
+local GrapplingHook = require "grappling_hook"
 
 function love.load()
     -- tiled map 
@@ -56,9 +55,6 @@ function love.load()
         end
     end
 
-    local wall = world:newRectangleCollider(100,200,120,300)
-    wall:setType('static')
-
     itemz = {
         x = 200,
         y = 200,
@@ -102,20 +98,6 @@ function love.load()
     cam = Camera(player.x, player.y)
     -- ======
 
-
-    -- enemy animations 
-
-    --    -- player animations
-    -- love.graphics.setDefaultFilter("nearest", "nearest")
-    -- player.spritesheet = love.graphics.newImage('sprites/wizardsprite.png')
-    -- player.grid = anim8.newGrid(16,22,player.spritesheet:getWidth(),player.spritesheet:getHeight(),0,4,0)
-
-    -- player.animations = {}
-    -- player.animations.left = anim8.newAnimation(player.grid('1-6',1), 0.1)
-    -- player.animations.right = anim8.newAnimation(player.grid('1-6',1), 0.1)
-        
-    -- player.anim=player.animations.left
-
     enemy.spritesheet = love.graphics.newImage('sprites/enemysprite.png')
     enemy.grid=anim8.newGrid(15,17,enemy.spritesheet:getWidth(),enemy.spritesheet:getHeight(),0,0,0)
     enemy.animations = {}
@@ -125,12 +107,7 @@ function love.load()
     
 
     
-    hookActive = false
-    hookSpeed = player.speed*2.5
-    hookTargetX = 0
-    hookTargetY = 0
-    hookCooldown = 0
-    hookCooldownTime = 0.8 -- cd  
+    hook = GrapplingHook.init(player)
 
     counter=0
     
@@ -149,10 +126,6 @@ function love.update(dt)
 
     if enemy.dmgCD > 0 then
         enemy.dmgCD = enemy.dmgCD-dt
-    end
-    
-    if hookCooldown > 0 then
-        hookCooldown = hookCooldown - dt
     end
 
     local dx, dy = 0, 0
@@ -206,7 +179,7 @@ function love.update(dt)
     player.anim:update(dt)
     enemy.anim:update(dt)
 
-    if not hookActive then
+    if not hook.active then
         player.x = player.x + dx * player.speed * dt
         player.y = player.y + dy * player.speed * dt
     end
@@ -219,76 +192,13 @@ function love.update(dt)
         player.hp = 100  
         itemz.collected = false
         itemzD.collected = false  
-        hookActive = false
-        hookTargetX = 0
-        hookTargetY = 0
-        hookCooldown = 0 
+        GrapplingHook.reset(hook)
         player.isdead = false  
         enemy.x = love.math.random(0,1250)
         enemy.y = love.math.random(0,1250)
     end
 
-    
-    if love.keyboard.isDown("space") and not hookActive and hookCooldown <= 0 then
-        flag = true 
-        
-        -- top left space + a OR w + a + space
-        if love.keyboard.isDown("a") and (love.keyboard.isDown("w") or not love.keyboard.isDown("s")) then
-            hookTargetX = player.x - 170
-            hookTargetY = player.y - 150
-        
-        -- top right: space + d OR w + d + space
-        elseif love.keyboard.isDown("d") and (love.keyboard.isDown("w") or not love.keyboard.isDown("s")) then
-            hookTargetX = player.x + 170
-            hookTargetY = player.y - 150
-        
-        -- bottom left: s + a + space
-        elseif love.keyboard.isDown("s") and love.keyboard.isDown("a") then
-            hookTargetX = player.x - 170
-            hookTargetY = player.y + 150
-        
-        -- bottom right: s + d + space
-        elseif love.keyboard.isDown("s") and love.keyboard.isDown("d") then
-            hookTargetX = player.x + 170
-            hookTargetY = player.y + 150
-        
-        -- down: space + s 
-        elseif love.keyboard.isDown("s") and not love.keyboard.isDown("a") and not love.keyboard.isDown("d") then
-            hookTargetX = player.x
-            hookTargetY = player.y + 200
-        
-        -- default case (space) 
-        else
-            hookTargetX = player.x 
-            hookTargetY = player.y - 200
-        end
-        
-        if flag==true then
-            NonUpdateingY=hookTargetY
-            NonUpdateingX=player.x+170
-            flag=false
-        end
-        hookActive = true
-        hookCooldown = hookCooldownTime  
-    end
-
-    if hookActive then
-        local hx = hookTargetX - player.x
-        local hy = hookTargetY - player.y
-        local distance = math.sqrt(hx*hx + hy*hy)
-
-        if distance > 2 then
-            local nx = hx / distance
-            local ny = hy / distance
-            player.x = player.x + nx * hookSpeed * dt
-            player.y = player.y + ny * hookSpeed * dt
-        else
-            player.x = hookTargetX
-            player.y = hookTargetY
-            hookActive = false
-        end
-    end
-
+    GrapplingHook.update(hook, player, dt, cam)
 
     cam:lockPosition(player.x + player.size / 2, player.y + player.size / 2)
 
@@ -369,15 +279,7 @@ function love.draw()
         love.graphics.print("DEAD", player.x, player.y - 50)
     end
 
-    if hookActive then
-        love.graphics.setColor(255, 255, 0)
-        love.graphics.line(
-            player.x + 24,
-            player.y + 36,
-            NonUpdateingX - 100,
-            NonUpdateingY
-        )
-    end
+    GrapplingHook.draw(hook, player)
 
     love.graphics.setColor(255, 255, 255)
     local px = player.collider:getX()
@@ -391,8 +293,11 @@ function love.draw()
     love.graphics.setColor(255, 0, 0)
     local ex, ey = enemy.collider:getPosition()
     if enemy.isdead ==false then
-    -- love.graphics.rectangle("fill", ex - enemy.size/2, ey - enemy.size/2, enemy.size, enemy.size)
+    if enemy.x<player.x then
     enemy.anim:draw(enemy.spritesheet, ex-20,ey-38,nil,3,3)
+    else
+        enemy.anim:draw(enemy.spritesheet,ex+20,ey-38,nil,-3,3)
+    end
     end
 
     if not itemz.collected then
@@ -407,4 +312,8 @@ function love.draw()
 
     world:draw()
     cam:detach()
+    -- cords 
+    love.graphics.setColor(255, 0, 0)
+    love.graphics.print("X: "..math.floor(player.x).." Y: "..math.floor(player.y), love.graphics.getWidth() - 150, 10)
+
 end
