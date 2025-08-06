@@ -84,7 +84,7 @@ function love.load()
         dmg = 25,
         dmgCD = 0,
         dmgCDT = 0.8, -- enemy attack cd 
-        speed = 500,
+        speed = 250,
         size = 32,
         isdead=false,
         hp = 50
@@ -119,6 +119,12 @@ function love.load()
         damage = 10,
         damageCD = 0.35
     }
+
+    -- test enemy wave system 
+    wave = {}
+    for i=1, 20 do
+        wave[i] = enemy
+    end
     
 end
 
