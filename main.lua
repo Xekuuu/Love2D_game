@@ -21,16 +21,17 @@ function love.load()
         size = 32,
         hp = 100,
         isdead = false, 
-        isleft = false
+        isleft = false,
+        range = 200,
+        rangeY=range,
+        rangeX=range
+
     }
     -- player physics
     world:addCollisionClass('Movers',{ignores={'Movers'}})
     player.collider = world:newBSGRectangleCollider(400, 200, 32, 40, 0)
     player.collider:setFixedRotation(true)
     player.collider:setCollisionClass('Movers')
-    
-    
-
 
     -- player animations
     love.graphics.setDefaultFilter("nearest", "nearest")
@@ -85,7 +86,8 @@ function love.load()
         dmgCDT = 0.8, -- enemy attack cd 
         speed = 500,
         size = 32,
-        isdead=false
+        isdead=false,
+        hp = 50
     }
 
 
@@ -112,6 +114,11 @@ function love.load()
     counter=0
     
     isEnemyFrozen = false
+
+    weapon = {
+        damage = 10,
+        damageCD = 0.35
+    }
     
 end
 
@@ -119,10 +126,14 @@ function love.update(dt)
     gameMap:update(dt)
     local isMoving = false
 
-    local vx=0
-    local vy=0
-
-
+    if enemy.hp <=0 then
+        enemy.isdead=true
+        enemy.collider:setLinearVelocity(0, 0)
+    end
+    -- cds 
+    if weapon.damageCD > 0 then
+        weapon.damageCD = weapon.damageCD-dt
+    end
 
     if enemy.dmgCD > 0 then
         enemy.dmgCD = enemy.dmgCD-dt
@@ -186,8 +197,8 @@ function love.update(dt)
 
     
     if love.keyboard.isDown("r") then
-        player.x = 100
-        player.y = 100
+        player.x = player.collider:getX()
+        player.y = player.collider:getY()
         player.speed = 300
         player.hp = 100  
         itemz.collected = false
@@ -196,6 +207,8 @@ function love.update(dt)
         player.isdead = false  
         enemy.x = love.math.random(0,1250)
         enemy.y = love.math.random(0,1250)
+        enemy.collider:setLinearVelocity(dx * enemy.speed, dy * enemy.speed)
+        enemy.isdead=false
     end
 
     GrapplingHook.update(hook, player, dt, cam)
@@ -258,6 +271,10 @@ end
         player.speed=0
     end
 
+    -- weapon top right trest
+    if enemy.x <= player.x+player.range and enemy.y<=player.y+player.range then
+        enemy.hp = enemy.hp-weapon.damage
+    end
 
 end
 
@@ -282,12 +299,15 @@ function love.draw()
     GrapplingHook.draw(hook, player)
 
     love.graphics.setColor(255, 255, 255)
+    -- player draw
     local px = player.collider:getX()
     local py = player.collider:getY()
     if player.isleft==false then
         player.anim:draw(player.spritesheet, px - 20, py - 38, nil, 3, 3)
+        love.graphics.circle("line",px,py,player.range)
     else
         player.anim:draw(player.spritesheet, px + 20, py - 38, nil, -3, 3)
+        love.graphics.circle("line",px,py,player.range)
     end
 
     love.graphics.setColor(255, 0, 0)
