@@ -135,6 +135,7 @@ function love.update(dt)
     if enemy.hp <=0 then
         enemy.isdead=true
         enemy.collider:setLinearVelocity(0, 0)
+        enemy.dmg=0
     end
     -- cds 
     if weapon.damageCD > 0 then
