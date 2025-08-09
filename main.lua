@@ -2,6 +2,8 @@ local Camera = require "camera"
 local cam
 local anim8 = require "anim8"
 local GrapplingHook = require "grappling_hook"
+local reset = require "reset"
+local freeze = require "freeze"
 
 function love.load()
     -- tiled map 
@@ -28,7 +30,8 @@ function love.load()
 
     }
     -- player physics
-    world:addCollisionClass('Movers',{ignores={'Movers'}})
+    world:addCollisionClass('Enemys')
+    world:addCollisionClass('Movers',{ignores={'Enemys'}})
     player.collider = world:newBSGRectangleCollider(400, 200, 32, 40, 0)
     player.collider:setFixedRotation(true)
     player.collider:setCollisionClass('Movers')
@@ -81,7 +84,7 @@ function love.load()
     enemy = {
         x = love.math.random(0,1250),
         y = love.math.random(0,1250),
-        dmg = 25,
+        dmg = 1,
         dmgCD = 0,
         dmgCDT = 0.8, -- enemy attack cd 
         speed = 250,
@@ -92,7 +95,6 @@ function love.load()
 
 
     -- enemy phy
-    world:addCollisionClass('Enemys',{ignores={'Movers'}})
     enemy.collider=world:newBSGRectangleCollider(enemy.x,enemy.y,32,40,0)
     enemy.collider:setFixedRotation(true)
     enemy.collider:setCollisionClass('Enemys')
@@ -117,7 +119,7 @@ function love.load()
     isEnemyFrozen = false
 
     weapon = {
-        damage = 10,
+        damage = 1,
         damageCD = 0,
         ProjSpeed = 550,
         isShooting = false
@@ -295,6 +297,7 @@ end
            not enemy.isdead then
             enemy.hp = enemy.hp - weapon.damage
             table.remove(projectiles, i)
+            -- cleanup
         elseif proj.x < 0 or proj.x > 1900 or proj.y < 80 or proj.y > 1800 then
             table.remove(projectiles, i)
         end
@@ -322,7 +325,6 @@ function love.keypressed(key)
         enemy.collider:setLinearVelocity(0, 0)
         enemy.isdead=false
         enemy.hp = 50
-        enemy.dmg = 25
         projectiles = {}
     end
 end
