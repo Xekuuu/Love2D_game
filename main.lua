@@ -92,9 +92,10 @@ function love.load()
 
 
     -- enemy phy
+    world:addCollisionClass('Enemys',{ignores={'Movers'}})
     enemy.collider=world:newBSGRectangleCollider(enemy.x,enemy.y,32,40,0)
     enemy.collider:setFixedRotation(true)
-    enemy.collider:setCollisionClass('Movers')
+    enemy.collider:setCollisionClass('Enemys')
 
     -- ======
     cam = Camera(player.x, player.y)
@@ -116,15 +117,13 @@ function love.load()
     isEnemyFrozen = false
 
     weapon = {
-        damage = 10,
-        damageCD = 0.35
+        damage = 1,
+        damageCD = 0,
+        ProjSpeed = 550,
+        isShooting = false
     }
 
-    -- test enemy wave system 
-    wave = {}
-    for i=1, 20 do
-        wave[i] = enemy
-    end
+    projectiles = {}
     
 end
 
@@ -262,18 +261,44 @@ end
         player.speed=0
     end
 
-
     if weapon.damageCD <= 0 then
-    local dx = enemy.x - player.x
-    local dy = enemy.y - player.y
-    local distance = math.sqrt(dx * dx + dy * dy)
-    
-    if distance <= player.range and not enemy.isdead then
-        enemy.hp = enemy.hp - weapon.damage
-        weapon.damageCD = 0.35 
+        local dx = enemy.x - player.x
+        local dy = enemy.y - player.y
+        local distance = math.sqrt(dx * dx + dy * dy)
+        
+        if distance <= player.range and not enemy.isdead then
+            local len = math.sqrt(dx*dx + dy*dy)
+            dx = dx / len
+            dy = dy / len
+            
+            local proj = {
+                x = player.x,
+                y = player.y,
+                vx = dx * weapon.ProjSpeed,
+                vy = dy * weapon.ProjSpeed
+            }
+            table.insert(projectiles, proj)
+            weapon.damageCD = 0.35
+        end
     end
-end
 
+    for i = #projectiles, 1, -1 do
+        local proj = projectiles[i]
+        proj.x = proj.x + proj.vx * dt
+        proj.y = proj.y + proj.vy * dt
+        
+        if proj.x < enemy.x + enemy.size and
+           proj.x + 3 > enemy.x and
+           proj.y < enemy.y + enemy.size and
+           proj.y + 3 > enemy.y and
+           not enemy.isdead then
+            enemy.hp = enemy.hp - weapon.damage
+            table.remove(projectiles, i)
+            -- cleanup
+        elseif proj.x < 0 or proj.x > 1900 or proj.y < 80 or proj.y > 1800 then
+            table.remove(projectiles, i)
+        end
+    end
 
 end
 
@@ -297,6 +322,8 @@ function love.keypressed(key)
         enemy.collider:setLinearVelocity(0, 0)
         enemy.isdead=false
         enemy.hp = 50
+        enemy.dmg=25
+        projectiles = {}
     end
 end
 
@@ -324,6 +351,10 @@ function love.draw()
         player.anim:draw(player.spritesheet, px + 20, py - 38, nil, -3, 3)
         love.graphics.circle("line",px,py,player.range)
     end
+    
+    local playerHealthPercent = player.hp / 100
+    love.graphics.setColor(1, 0, 0, 1)
+    love.graphics.rectangle("fill", px - 16, py - 50, 32 * playerHealthPercent, 4)
 
     love.graphics.setColor(1, 1, 1, 1)
     local ex, ey = enemy.collider:getPosition()
@@ -333,6 +364,10 @@ function love.draw()
     else
         enemy.anim:draw(enemy.spritesheet,ex+20,ey-38,nil,-3,3)
     end
+    
+    local healthPercent = enemy.hp / 50
+    love.graphics.setColor(1, 0, 0, 1)
+    love.graphics.rectangle("fill", ex - 16, ey - 50, 32 * healthPercent, 4)
     end
 
     if not itemz.collected then
@@ -343,6 +378,11 @@ function love.draw()
     if not itemzD.collected then
         love.graphics.setColor(1, 0, 0, 1) 
         love.graphics.rectangle("line", itemzD.x, itemzD.y, itemzD.size, itemzD.size)
+    end
+
+    for _, proj in ipairs(projectiles) do
+        love.graphics.setColor(1, 1, 0, 1)
+        love.graphics.circle("fill", proj.x, proj.y, 5)
     end
 
     -- world:draw()
