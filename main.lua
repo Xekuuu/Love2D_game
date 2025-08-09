@@ -117,7 +117,7 @@ function love.load()
     isEnemyFrozen = false
 
     weapon = {
-        damage = 1,
+        damage = 10,
         damageCD = 0,
         ProjSpeed = 550,
         isShooting = false
@@ -287,14 +287,14 @@ end
         proj.x = proj.x + proj.vx * dt
         proj.y = proj.y + proj.vy * dt
         
-        if proj.x < enemy.x + enemy.size and
-           proj.x + 3 > enemy.x and
-           proj.y < enemy.y + enemy.size and
-           proj.y + 3 > enemy.y and
+        local grace = 10
+        if proj.x < enemy.x + enemy.size + grace and
+           proj.x + 3 > enemy.x - grace and
+           proj.y < enemy.y + enemy.size + grace and
+           proj.y + 3 > enemy.y - grace and
            not enemy.isdead then
             enemy.hp = enemy.hp - weapon.damage
             table.remove(projectiles, i)
-            -- cleanup
         elseif proj.x < 0 or proj.x > 1900 or proj.y < 80 or proj.y > 1800 then
             table.remove(projectiles, i)
         end
@@ -322,7 +322,7 @@ function love.keypressed(key)
         enemy.collider:setLinearVelocity(0, 0)
         enemy.isdead=false
         enemy.hp = 50
-        enemy.dmg=25
+        enemy.dmg = 25
         projectiles = {}
     end
 end
