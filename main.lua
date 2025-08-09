@@ -81,35 +81,37 @@ function love.load()
         size = 1250
     }
 
-    enemy = {
-        x = love.math.random(0,1250),
-        y = love.math.random(0,1250),
-        dmg = 1,
-        dmgCD = 0,
-        dmgCDT = 0.8, -- enemy attack cd 
-        speed = 250,
-        size = 32,
-        isdead=false,
-        hp = 50
-    }
+    enemies = {}
+    for i = 1, 5 do
+        local enemy = {
+            x = love.math.random(0,1250),
+            y = love.math.random(0,1250),
+            dmg = 10,
+            dmgCD = 0,
+            dmgCDT = 0.8, -- enemy attack cd 
+            speed = 250,
+            size = 32,
+            isdead=false,
+            hp = 50
+        }
 
+        -- enemy phy
+        enemy.collider=world:newBSGRectangleCollider(enemy.x,enemy.y,32,40,0)
+        enemy.collider:setFixedRotation(true)
+        enemy.collider:setCollisionClass('Enemys')
 
-    -- enemy phy
-    enemy.collider=world:newBSGRectangleCollider(enemy.x,enemy.y,32,40,0)
-    enemy.collider:setFixedRotation(true)
-    enemy.collider:setCollisionClass('Enemys')
+        enemy.spritesheet = love.graphics.newImage('sprites/enemysprite.png')
+        enemy.grid=anim8.newGrid(15,17,enemy.spritesheet:getWidth(),enemy.spritesheet:getHeight(),0,0,0)
+        enemy.animations = {}
+        enemy.animations.left=anim8.newAnimation(enemy.grid('1-4',1), 0.1)
+        enemy.anim=enemy.animations.left
+
+        table.insert(enemies, enemy)
+    end
 
     -- ======
     cam = Camera(player.x, player.y)
     -- ======
-
-    enemy.spritesheet = love.graphics.newImage('sprites/enemysprite.png')
-    enemy.grid=anim8.newGrid(15,17,enemy.spritesheet:getWidth(),enemy.spritesheet:getHeight(),0,0,0)
-    enemy.animations = {}
-        enemy.animations.left=anim8.newAnimation(enemy.grid('1-4',1), 0.1)
-
-    enemy.anim=enemy.animations.left
-    
 
     
     hook = GrapplingHook.init(player)
@@ -119,7 +121,7 @@ function love.load()
     isEnemyFrozen = false
 
     weapon = {
-        damage = 1,
+        damage = 10,
         damageCD = 0,
         ProjSpeed = 550,
         isShooting = false
@@ -133,18 +135,23 @@ function love.update(dt)
     gameMap:update(dt)
     local isMoving = false
 
-    if enemy.hp <=0 then
-        enemy.isdead=true
-        enemy.collider:setLinearVelocity(0, 0)
-        enemy.dmg=0
+    for _, enemy in ipairs(enemies) do
+        if enemy.hp <=0 then
+            enemy.isdead=true
+            enemy.collider:setLinearVelocity(0, 0)
+            enemy.dmg=0
+        end
     end
+
     -- cds 
     if weapon.damageCD > 0 then
         weapon.damageCD = weapon.damageCD-dt
     end
 
-    if enemy.dmgCD > 0 then
-        enemy.dmgCD = enemy.dmgCD-dt
+    for _, enemy in ipairs(enemies) do
+        if enemy.dmgCD > 0 then
+            enemy.dmgCD = enemy.dmgCD-dt
+        end
     end
 
     local dx, dy = 0, 0
@@ -192,11 +199,15 @@ function love.update(dt)
     player.y=player.collider:getY()
 
     -- enemy phy
-    enemy.x=enemy.collider:getX()
-    enemy.y=enemy.collider:getY()
+    for _, enemy in ipairs(enemies) do
+        enemy.x=enemy.collider:getX()
+        enemy.y=enemy.collider:getY()
+    end
 
     player.anim:update(dt)
-    enemy.anim:update(dt)
+    for _, enemy in ipairs(enemies) do
+        enemy.anim:update(dt)
+    end
 
     if not hook.active then
         player.x = player.x + dx * player.speed * dt
@@ -228,24 +239,25 @@ function love.update(dt)
         itemzD.collected = true
     end
 
-    if enemy.isdead == false and not isEnemyFrozen then
-    local dx = player.x - enemy.x
-    local dy = player.y - enemy.y
-    local dist = math.sqrt(dx * dx + dy * dy)
-    if dist > 0 then
-        dx = dx / dist
-        dy = dy / dist
-        enemy.collider:setLinearVelocity(dx * enemy.speed, dy * enemy.speed)
-        enemy.anim=enemy.animations.left
-    else
-        enemy.collider:setLinearVelocity(0, 0)
+    for _, enemy in ipairs(enemies) do
+        if enemy.isdead == false and not isEnemyFrozen then
+        local dx = player.x - enemy.x
+        local dy = player.y - enemy.y
+        local dist = math.sqrt(dx * dx + dy * dy)
+        if dist > 0 then
+            dx = dx / dist
+            dy = dy / dist
+            enemy.collider:setLinearVelocity(dx * enemy.speed, dy * enemy.speed)
+            enemy.anim=enemy.animations.left
+        else
+            enemy.collider:setLinearVelocity(0, 0)
+        end
+        elseif isEnemyFrozen then
+            enemy.collider:setLinearVelocity(0, 0)
+        end
     end
-elseif isEnemyFrozen then
-    enemy.collider:setLinearVelocity(0, 0)
-end
 
-
-        
+    for _, enemy in ipairs(enemies) do        
        if player.x < enemy.x + enemy.size and
        enemy.dmgCD <= 0 and
         player.x + enemy.size > enemy.x and
@@ -255,6 +267,7 @@ end
         player.hp = player.hp - enemy.dmg
         enemy.dmgCD=enemy.dmgCDT
         end
+    end
         
 
     
@@ -264,11 +277,25 @@ end
     end
 
     if weapon.damageCD <= 0 then
-        local dx = enemy.x - player.x
-        local dy = enemy.y - player.y
-        local distance = math.sqrt(dx * dx + dy * dy)
+        local closestEnemy = nil
+        local closestDistance = player.range + 1
         
-        if distance <= player.range and not enemy.isdead then
+        for _, enemy in ipairs(enemies) do
+            if not enemy.isdead then
+                local dx = enemy.x - player.x
+                local dy = enemy.y - player.y
+                local distance = math.sqrt(dx * dx + dy * dy)
+                
+                if distance <= player.range and distance < closestDistance then
+                    closestEnemy = enemy
+                    closestDistance = distance
+                end
+            end
+        end
+        
+        if closestEnemy then
+            local dx = closestEnemy.x - player.x
+            local dy = closestEnemy.y - player.y
             local len = math.sqrt(dx*dx + dy*dy)
             dx = dx / len
             dy = dy / len
@@ -289,16 +316,22 @@ end
         proj.x = proj.x + proj.vx * dt
         proj.y = proj.y + proj.vy * dt
         
-        local grace = 10
-        if proj.x < enemy.x + enemy.size + grace and
-           proj.x + 3 > enemy.x - grace and
-           proj.y < enemy.y + enemy.size + grace and
-           proj.y + 3 > enemy.y - grace and
-           not enemy.isdead then
-            enemy.hp = enemy.hp - weapon.damage
-            table.remove(projectiles, i)
-            -- cleanup
-        elseif proj.x < 0 or proj.x > 1900 or proj.y < 80 or proj.y > 1800 then
+        local hit = false
+        for _, enemy in ipairs(enemies) do
+            if not enemy.isdead then
+                local grace = 10
+                if proj.x < enemy.x + enemy.size + grace and
+                   proj.x + 3 > enemy.x - grace and
+                   proj.y < enemy.y + enemy.size + grace and
+                   proj.y + 3 > enemy.y - grace then
+                    enemy.hp = enemy.hp - weapon.damage
+                    hit = true
+                    break
+                end
+            end
+        end
+        
+        if hit or proj.x < 0 or proj.x > 1900 or proj.y < 80 or proj.y > 1800 then
             table.remove(projectiles, i)
         end
     end
@@ -308,24 +341,10 @@ end
 
 function love.keypressed(key)
     if key == "x" then
-        isEnemyFrozen = not isEnemyFrozen
+        freeze.toggleEnemyFreeze()
     end
     if key == "r" then
-        player.x = player.collider:getX()
-        player.y = player.collider:getY()
-        player.speed = 300
-        player.hp = 100  
-        itemz.collected = false
-        itemzD.collected = false  
-        GrapplingHook.reset(hook)
-        player.isdead = false  
-        enemy.x = love.math.random(0,1250)
-        enemy.y = love.math.random(0,1250)
-        enemy.collider:setPosition(enemy.x, enemy.y)
-        enemy.collider:setLinearVelocity(0, 0)
-        enemy.isdead=false
-        enemy.hp = 50
-        projectiles = {}
+        reset.resetGame(player, itemz, itemzD, GrapplingHook, hook, enemies, projectiles)
     end
 end
 
@@ -359,17 +378,20 @@ function love.draw()
     love.graphics.rectangle("fill", px - 16, py - 50, 32 * playerHealthPercent, 4)
 
     love.graphics.setColor(1, 1, 1, 1)
-    local ex, ey = enemy.collider:getPosition()
-    if enemy.isdead ==false then
-    if enemy.x<player.x then
-    enemy.anim:draw(enemy.spritesheet, ex-20,ey-38,nil,3,3)
-    else
-        enemy.anim:draw(enemy.spritesheet,ex+20,ey-38,nil,-3,3)
-    end
-    
-    local healthPercent = enemy.hp / 50
-    love.graphics.setColor(1, 0, 0, 1)
-    love.graphics.rectangle("fill", ex - 16, ey - 50, 32 * healthPercent, 4)
+    for _, enemy in ipairs(enemies) do
+        local ex, ey = enemy.collider:getPosition()
+        if enemy.isdead ==false then
+        if enemy.x<player.x then
+        enemy.anim:draw(enemy.spritesheet, ex-20,ey-38,nil,3,3)
+        else
+            enemy.anim:draw(enemy.spritesheet,ex+20,ey-38,nil,-3,3)
+        end
+        
+        local healthPercent = enemy.hp / 50
+        love.graphics.setColor(1, 0, 0, 1)
+        love.graphics.rectangle("fill", ex - 16, ey - 50, 32 * healthPercent, 4)
+        love.graphics.setColor(1, 1, 1, 1)
+        end
     end
 
     if not itemz.collected then
