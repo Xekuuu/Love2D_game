@@ -17,8 +17,8 @@ function love.load()
 
     player = {
         
-        x = 400,
-        y = 200,
+        x = 983,
+        y = 761,
         speed = 300,
         size = 32,
         hp = 100,
@@ -32,7 +32,7 @@ function love.load()
     -- player physics
     world:addCollisionClass('Enemys')
     world:addCollisionClass('Movers',{ignores={'Enemys'}})
-    player.collider = world:newBSGRectangleCollider(400, 200, 32, 40, 0)
+    player.collider = world:newBSGRectangleCollider(player.x, player.y, player.size, 40, 0)
     player.collider:setFixedRotation(true)
     player.collider:setCollisionClass('Movers')
 
@@ -81,15 +81,18 @@ function love.load()
         size = 1250
     }
 
+    -- enemy horde 
+    wavesize=3
+    waveflag=false
     enemies = {}
-    for i = 1, 5 do
+    for i = 1, wavesize do
         local enemy = {
             x = love.math.random(0,1250),
             y = love.math.random(0,1250),
-            dmg = 10,
+            dmg = 1,
             dmgCD = 0,
             dmgCDT = 0.8, -- enemy attack cd 
-            speed = 250,
+            speed = love.math.random(150,300),
             size = 32,
             isdead=false,
             hp = 50
@@ -121,7 +124,7 @@ function love.load()
     isEnemyFrozen = false
 
     weapon = {
-        damage = 10,
+        damage = 1,
         damageCD = 0,
         ProjSpeed = 550,
         isShooting = false
@@ -129,11 +132,16 @@ function love.load()
 
     projectiles = {}
     
+    timer = 0
+    
 end
 
 function love.update(dt)
     gameMap:update(dt)
     local isMoving = false
+    
+    timer = timer + dt
+    
 
     for _, enemy in ipairs(enemies) do
         if enemy.hp <=0 then
@@ -405,14 +413,20 @@ function love.draw()
     end
 
     for _, proj in ipairs(projectiles) do
-        love.graphics.setColor(1, 1, 0, 1)
+        love.graphics.setColor(1, 0, 0, 1)
         love.graphics.circle("fill", proj.x, proj.y, 5)
     end
 
-    -- world:draw()
+    world:draw()
     cam:detach()
-    -- cords 
+
+    
+    local Font = love.graphics.newFont(30)
+    love.graphics.setFont(Font)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.print(math.floor(timer), love.graphics.getWidth()/2 - 10, 10)
+    
     love.graphics.setColor(1, 0, 0, 1)  
-    love.graphics.print("X: "..math.floor(player.x).." Y: "..math.floor(player.y), love.graphics.getWidth() - 150, 10)
+    love.graphics.print("X: "..math.floor(player.x).." Y: "..math.floor(player.y), love.graphics.getWidth() - 230, 10)
 
 end
