@@ -87,8 +87,8 @@ function love.load()
     enemies = {}
     for i = 1, wavesize do
         local enemy = {
-            x = love.math.random(0,1250),
-            y = love.math.random(0,1250),
+            x = love.math.random(50,1800),
+            y = love.math.random(80,1700),
             dmg = 1,
             dmgCD = 0,
             dmgCDT = 0.8, -- enemy attack cd 
@@ -148,8 +148,8 @@ function love.update(dt)
         waveflag = true
         for i = 1, wavesize do
             local enemy = {
-                x = love.math.random(0,1250),
-                y = love.math.random(0,1250),
+                x = love.math.random(50,1800),
+                y = love.math.random(80,1700),
                 dmg = 1,
                 dmgCD = 0,
                 dmgCDT = 0.8, -- enemy attack cd 
@@ -276,7 +276,7 @@ function love.update(dt)
         player.speed = player.speed + itemz.value
         itemz.collected = true
     end
-
+    
     if not itemzD.collected and
         player.x < itemzD.x + itemzD.size and
         player.x + player.size > itemzD.x and
@@ -469,5 +469,6 @@ function love.draw()
     
     love.graphics.setColor(1, 0, 0, 1)  
     love.graphics.print("X: "..math.floor(player.x).." Y: "..math.floor(player.y), love.graphics.getWidth() - 230, 10)
+    love.graphics.print("FPS:"..tostring(love.timer.getFPS( )), 10, 10)
 
 end
