@@ -180,7 +180,11 @@ function love.update(dt)
     for _, enemy in ipairs(enemies) do
         if enemy.hp <=0 then
             enemy.isdead=true
-            enemy.collider:setLinearVelocity(0, 0)
+            if enemy.collider then
+                enemy.collider:setLinearVelocity(0, 0)
+                enemy.collider:destroy()
+                enemy.collider = nil
+            end
             enemy.dmg=0
         end
     end
@@ -242,8 +246,10 @@ function love.update(dt)
 
     -- enemy phy
     for _, enemy in ipairs(enemies) do
-        enemy.x=enemy.collider:getX()
-        enemy.y=enemy.collider:getY()
+        if enemy.collider then 
+        enemy.x = enemy.collider:getX()
+        enemy.y = enemy.collider:getY()
+        end
     end
 
     player.anim:update(dt)
@@ -282,8 +288,7 @@ function love.update(dt)
     end
 
     for _, enemy in ipairs(enemies) do
-        if enemy.isdead == false and not isEnemyFrozen then
-        local dx = player.x - enemy.x
+    if enemy.collider and enemy.isdead == false and not isEnemyFrozen then        local dx = player.x - enemy.x
         local dy = player.y - enemy.y
         local dist = math.sqrt(dx * dx + dy * dy)
         if dist > 0 then
@@ -294,7 +299,7 @@ function love.update(dt)
         else
             enemy.collider:setLinearVelocity(0, 0)
         end
-        elseif isEnemyFrozen then
+        elseif enemy.collider and isEnemyFrozen then
             enemy.collider:setLinearVelocity(0, 0)
         end
     end
@@ -421,6 +426,7 @@ function love.draw()
 
     love.graphics.setColor(1, 1, 1, 1)
     for _, enemy in ipairs(enemies) do
+        if enemy.collider and enemy.isdead == false then
         local ex, ey = enemy.collider:getPosition()
         if enemy.isdead ==false then
         if enemy.x<player.x then
@@ -434,6 +440,7 @@ function love.draw()
         love.graphics.rectangle("fill", ex - 16, ey - 50, 32 * healthPercent, 4)
         love.graphics.setColor(1, 1, 1, 1)
         end
+    end
     end
 
     if not itemz.collected then

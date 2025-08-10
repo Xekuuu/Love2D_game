@@ -11,10 +11,12 @@ function reset.resetGame(player, itemz, itemzD, GrapplingHook, hook, enemies, pr
     player.isdead = false  
     
     for _, enemy in ipairs(enemies) do
-        enemy.x = love.math.random(0,1250)
-        enemy.y = love.math.random(0,1250)
-        enemy.collider:setPosition(enemy.x, enemy.y)
-        enemy.collider:setLinearVelocity(0, 0)
+        if enemy.collider then
+            enemy.x = love.math.random(0,1250)
+            enemy.y = love.math.random(0,1250)
+            enemy.collider:setPosition(enemy.x, enemy.y)
+            enemy.collider:setLinearVelocity(0, 0)
+        end
         enemy.isdead=false
         enemy.hp = 50
     end

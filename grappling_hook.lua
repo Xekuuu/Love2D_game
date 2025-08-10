@@ -9,7 +9,8 @@ function GrapplingHook.init(player)
         cooldown = 0,
         cooldownTime = 0.8,
         nonUpdatingX = 0,
-        nonUpdatingY = 0
+        nonUpdatingY = 0,
+        TimeInHook = 0
     }
     return hook
 end
@@ -33,6 +34,12 @@ function GrapplingHook.update(hook, player, dt, cam)
     end
 
     if hook.active then
+        hook.TimeInHook = hook.TimeInHook + dt
+        if hook.TimeInHook > 2 then
+            hook.active = false
+            hook.TimeInHook = 0
+            return
+        end
         local hx = hook.targetX - player.x
         local hy = hook.targetY - player.y
         local distance = math.sqrt(hx*hx + hy*hy)
