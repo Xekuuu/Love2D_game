@@ -124,7 +124,7 @@ function love.load()
     isEnemyFrozen = false
 
     weapon = {
-        damage = 1,
+        damage = 15,
         damageCD = 0,
         ProjSpeed = 550,
         isShooting = false
@@ -133,6 +133,7 @@ function love.load()
     projectiles = {}
     
     timer = 0
+    WaveTracker = 10
     
 end
 
@@ -141,6 +142,39 @@ function love.update(dt)
     local isMoving = false
     
     timer = timer + dt
+
+    -- enemy spawn horde system
+    if timer >= WaveTracker and waveflag == false then
+        waveflag = true
+        for i = 1, wavesize do
+            local enemy = {
+                x = love.math.random(0,1250),
+                y = love.math.random(0,1250),
+                dmg = 1,
+                dmgCD = 0,
+                dmgCDT = 0.8, -- enemy attack cd 
+                speed = love.math.random(150,300),
+                size = 32,
+                isdead=false,
+                hp = 50
+            }
+
+            -- enemy phy
+            enemy.collider=world:newBSGRectangleCollider(enemy.x,enemy.y,32,40,0)
+            enemy.collider:setFixedRotation(true)
+            enemy.collider:setCollisionClass('Enemys')
+
+            enemy.spritesheet = love.graphics.newImage('sprites/enemysprite.png')
+            enemy.grid=anim8.newGrid(15,17,enemy.spritesheet:getWidth(),enemy.spritesheet:getHeight(),0,0,0)
+            enemy.animations = {}
+            enemy.animations.left=anim8.newAnimation(enemy.grid('1-4',1), 0.1)
+            enemy.anim=enemy.animations.left
+
+            table.insert(enemies, enemy)
+        end
+        WaveTracker = WaveTracker + 10
+        waveflag=false
+    end
     
 
     for _, enemy in ipairs(enemies) do
