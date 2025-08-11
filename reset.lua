@@ -9,6 +9,7 @@ function reset.resetGame(player, itemz, itemzD, GrapplingHook, hook, enemies, pr
     itemzD.collected = false  
     GrapplingHook.reset(hook)
     player.isdead = false  
+    player.money = 0
     
     for _, enemy in ipairs(enemies) do
         if enemy.collider then

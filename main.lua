@@ -4,6 +4,8 @@ local anim8 = require "anim8"
 local GrapplingHook = require "grappling_hook"
 local reset = require "reset"
 local freeze = require "freeze"
+local suit = require 'suit-master'
+
 
 function love.load()
     -- tiled map 
@@ -26,7 +28,8 @@ function love.load()
         isleft = false,
         range = 200,
         rangeY=range,
-        rangeX=range
+        rangeX=range,
+        money = 0
 
     }
     -- player physics
@@ -134,7 +137,27 @@ function love.load()
     
     timer = 0
     WaveTracker = 10
+
+
+    DmgPotion = {
+        dmgboost = 10,
+        price = 10
+    }
+
+    shop = {
+        x = 80,
+        y = 60,
+        width = 64,
+        height = 128,
+        isOpen = true,
+        playerInShop = false,
+        item1=DmgPotion
+    }
     
+end
+
+function love.textinput(t)
+    suit.textinput(t)
 end
 
 function love.update(dt)
@@ -184,6 +207,7 @@ function love.update(dt)
                 enemy.collider:setLinearVelocity(0, 0)
                 enemy.collider:destroy()
                 enemy.collider = nil
+                player.money = player.money + 10
             end
             enemy.dmg=0
         end
@@ -366,7 +390,7 @@ function love.update(dt)
         local hit = false
         for _, enemy in ipairs(enemies) do
             if not enemy.isdead then
-                local grace = 10
+                local grace = 5
                 if proj.x < enemy.x + enemy.size + grace and
                    proj.x + 3 > enemy.x - grace and
                    proj.y < enemy.y + enemy.size + grace and
@@ -383,10 +407,36 @@ function love.update(dt)
         end
     end
 
+
+    -- shop system
+    if player.collider:getX() <= shop.x + shop.width and
+       player.collider:getX() + player.size >= shop.x and
+       player.collider:getY() <= shop.y + shop.height and
+       player.collider:getY() + player.size >= shop.y then
+        shop.playerInShop = true
+    else
+        shop.playerInShop = false
+    end
+
+    if shop.playerInShop then 
+        isEnemyFrozen=true
+        if suit.Button("Buy Damage Potion ($10)", 100, 100, 200, 30).hit then
+            if player.money>=DmgPotion.price then
+                player.money = player.money - DmgPotion.price
+                weapon.damage = weapon.damage + DmgPotion.dmgboost
+                
+            end
+        end
+    else
+        isEnemyFrozen=false
+    end
+    
 end
 
 
 function love.keypressed(key)
+    suit.keypressed(key)
+    
     if key == "x" then
         freeze.toggleEnemyFreeze()
     end
@@ -394,6 +444,13 @@ function love.keypressed(key)
         reset.resetGame(player, itemz, itemzD, GrapplingHook, hook, enemies, projectiles)
     end
 end
+
+
+
+
+
+
+
 
 
 function love.draw()
@@ -447,6 +504,7 @@ function love.draw()
         love.graphics.setColor(0, 0, 0, 1)  
         love.graphics.rectangle("line", itemz.x, itemz.y, itemz.size, itemz.size)
     end
+    love.graphics.rectangle("fill", shop.x, shop.y, shop.width, shop.height)
 
     if not itemzD.collected then
         love.graphics.setColor(1, 0, 0, 1) 
@@ -461,6 +519,9 @@ function love.draw()
     world:draw()
     cam:detach()
 
+    if shop.playerInShop then
+        suit.draw() 
+    end
     
     local Font = love.graphics.newFont(30)
     love.graphics.setFont(Font)
@@ -470,5 +531,7 @@ function love.draw()
     love.graphics.setColor(1, 0, 0, 1)  
     love.graphics.print("X: "..math.floor(player.x).." Y: "..math.floor(player.y), love.graphics.getWidth() - 230, 10)
     love.graphics.print("FPS:"..tostring(love.timer.getFPS( )), 10, 10)
+    love.graphics.setColor(0, 1, 0, 1)  
+    love.graphics.print("Money: "..player.money, 10, 50)
 
 end
